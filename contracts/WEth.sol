@@ -27,7 +27,7 @@ contract WEth {
         if (msg.value == 0) {
             revert WETH__EthValueMustMoreThanZero();
         }
-        _balances[msg.sender] = msg.value;
+        _update(address(0), msg.sender, msg.value);
         return true;
     }
 
@@ -36,8 +36,8 @@ contract WEth {
         if (balance < value) {
             revert WETH__InsufficientBalance(msg.sender, balance, value);
         }
-        _balances[msg.sender] -= value;
-        payable(msg.sender).transfer(address(this).balance);
+        _update(msg.sender, address(0), value);
+        payable(msg.sender).transfer(value);
         return true;
     }
 
