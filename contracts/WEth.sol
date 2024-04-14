@@ -3,8 +3,10 @@ pragma solidity ^0.8.25;
 
 contract WEth {
     error WETH__InsufficientBalance(address from, uint256 fromBalance, uint256 value);
+    error WETH__InvalidSender(address from);
     error WETH__InvalidReceiver(address to);
     error WETH__InvalidSpender(address to);
+    error WETH__EthValueMustMoreThanZero();
 
     mapping(address account => uint256) private _balances;
     mapping(address account => mapping(address spender => uint256)) private _allowances;
@@ -21,28 +23,22 @@ contract WEth {
         _symbol = symbol_;
     }
 
-    function name() public view returns (string memory) {
-        return _name;
+    function deposit() public payable returns (bool) {
+        if (msg.value == 0) {
+            revert WETH__EthValueMustMoreThanZero();
+        }
+        _balances[msg.sender] = msg.value;
+        return true;
     }
 
-    function symbol() public view returns (string memory) {
-        return _symbol;
-    }
-
-    function decimals() public pure returns (uint8) {
-        return 18;
-    }
-
-    function totalSupply() public view returns (uint256) {
-        return _totalSupply;
-    }
-
-    function balanceOf(address account) public view returns (uint256) {
-        return _balances[account];
-    }
-
-    function allowance(address owner, address spender) public view returns (uint256) {
-        return _allowances[owner][spender];
+    function withdraw(uint256 value) public returns (bool) {
+        uint256 balance = _balances[msg.sender];
+        if (balance < value) {
+            revert WETH__InsufficientBalance(msg.sender, balance, value);
+        }
+        _balances[msg.sender] -= value;
+        payable(msg.sender).transfer(address(this).balance);
+        return true;
     }
 
     function transfer(address to, uint256 value) public returns (bool) {
@@ -55,7 +51,14 @@ contract WEth {
     }
 
     function transferFrom(address from, address to, uint256 value) public returns (bool) {
-        if()
+        if (from == address(0)) {
+            revert WETH__InvalidSender(address(0));
+        }
+        if (to == address(0)) {
+            revert WETH__InvalidReceiver(address(0));
+        }
+        _update(from, to, value);
+        return true;
     }
 
     function approve(address spender, uint256 value) public returns (bool) {
@@ -92,5 +95,29 @@ contract WEth {
             _balances[to] += value;
         }
         emit Transfer(from, to, value);
+    }
+
+    function name() public view returns (string memory) {
+        return _name;
+    }
+
+    function symbol() public view returns (string memory) {
+        return _symbol;
+    }
+
+    function decimals() public pure returns (uint8) {
+        return 18;
+    }
+
+    function totalSupply() public view returns (uint256) {
+        return _totalSupply;
+    }
+
+    function balanceOf(address account) public view returns (uint256) {
+        return _balances[account];
+    }
+
+    function allowance(address owner, address spender) public view returns (uint256) {
+        return _allowances[owner][spender];
     }
 }
