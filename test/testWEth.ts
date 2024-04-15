@@ -117,4 +117,25 @@ describe("WEth", async () => {
       );
     });
   });
+  describe("approval", async () => {
+    it("tomApproveBob", async () => {
+      const wEth = await getContract();
+      const signers = await ethers.getSigners();
+      const tom = signers[1];
+      const bob = signers[2];
+      const tomContract = wEth.connect(tom);
+      const bobContract = wEth.connect(bob);
+      await tomContract.deposit({ value: ethers.parseEther("10") });
+      await tomContract.approve(bob, ethers.parseEther("2"));
+      const allowanceBeforeBobRetrieve = await wEth.allowance(tom, bob);
+      assert.equal(allowanceBeforeBobRetrieve, ethers.parseEther("2"));
+      await bobContract.retrieveToken(tom, ethers.parseEther("1"));
+      const tomBlanceAfterBobRetrieve = await wEth.balanceOf(tom);
+      assert.equal(tomBlanceAfterBobRetrieve, ethers.parseEther("9"));
+      const allowanceAfterBobRetrieve = await wEth.allowance(tom, bob);
+      assert.equal(allowanceAfterBobRetrieve, ethers.parseEther("1"));
+      const bobBlanceAfterRetrieve = await wEth.balanceOf(bob);
+      assert.equal(bobBlanceAfterRetrieve, ethers.parseEther("1"));
+    });
+  });
 });

@@ -3,6 +3,7 @@ pragma solidity ^0.8.25;
 
 contract WEth {
     error WETH__InsufficientBalance(address from, uint256 fromBalance, uint256 value);
+    error WETH__ValueIsMoreThanAllowance(address from, uint256 allowance, uint256 value);
     error WETH__InvalidSender(address from);
     error WETH__InvalidReceiver(address to);
     error WETH__InvalidSpender(address to);
@@ -50,14 +51,23 @@ contract WEth {
         return true;
     }
 
-    function transferFrom(address from, address to, uint256 value) public returns (bool) {
+    function retrieveToken(address from, uint256 value) public returns (bool) {
+        return transferFrom(from, msg.sender, value);
+    }
+
+    function transferFrom(address from, address to, uint256 value) private returns (bool) {
         if (from == address(0)) {
             revert WETH__InvalidSender(address(0));
         }
         if (to == address(0)) {
             revert WETH__InvalidReceiver(address(0));
         }
+        uint256 allowanceOfTo = _allowances[from][to];
+        if (allowanceOfTo < value) {
+            revert WETH__ValueIsMoreThanAllowance(from, allowanceOfTo, value);
+        }
         _update(from, to, value);
+        _allowances[from][to] -= value;
         return true;
     }
 
