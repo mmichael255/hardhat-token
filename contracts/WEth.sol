@@ -32,6 +32,7 @@ contract WEth {
         return true;
     }
 
+    //needs reentrance guard
     function withdraw(uint256 value) public returns (bool) {
         uint256 balance = _balances[msg.sender];
         if (balance < value) {

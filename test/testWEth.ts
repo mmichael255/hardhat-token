@@ -138,4 +138,24 @@ describe("WEth", async () => {
       assert.equal(bobBlanceAfterRetrieve, ethers.parseEther("1"));
     });
   });
+  describe("transfer", async () => {
+    it("tomTransferToBob", async () => {
+      const wEth = await getContract();
+      const signers = await ethers.getSigners();
+      const tom = signers[1];
+      const bob = signers[2];
+
+      const tomContract = wEth.connect(tom);
+
+      await tomContract.deposit({ value: ethers.parseEther("10") });
+
+      await tomContract.transfer(bob, ethers.parseEther("6"));
+
+      const tomBlance = await wEth.balanceOf(tom);
+      const bobBlance = await wEth.balanceOf(bob);
+
+      assert.equal(tomBlance, ethers.parseEther("4"));
+      assert.equal(bobBlance, ethers.parseEther("6"));
+    });
+  });
 });
